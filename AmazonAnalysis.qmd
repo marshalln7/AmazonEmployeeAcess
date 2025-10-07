@@ -1,0 +1,25 @@
+---
+title: "AmazonAnalysis"
+format: html
+---
+
+```{r}
+library(tidymodels)
+library(tidyverse)
+library(vroom)
+```
+```{r}
+#| include: false
+train_data <- vroom("train.csv")
+test_data <- vroom("test.csv")
+```
+
+```{r}
+weather_bar_plot <- ggplot(train_data, aes(x = weather, y = mean_rentals)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Counts of Each Weather Type By Hour",
+       x = "Category",
+       y = "Count") +
+  theme_minimal()
+```
+
