@@ -7,19 +7,53 @@ format: html
 library(tidymodels)
 library(tidyverse)
 library(vroom)
+library(dplyr)
 ```
 ```{r}
 #| include: false
-train_data <- vroom("train.csv")
-test_data <- vroom("test.csv")
+train_data <- vroom("train.csv") |>
+  mutate(across(everything(), as.factor))
+test_data <- vroom("test.csv") |>
+  mutate(across(everything(), as.factor))
 ```
 
 ```{r}
-weather_bar_plot <- ggplot(train_data, aes(x = weather, y = mean_rentals)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(title = "Counts of Each Weather Type By Hour",
-       x = "Category",
+counts_per_resource <- train_data |>
+  summarize(across(everything(), n_distinct)) |>
+  pivot_longer(everything(), names_to = "Variable", values_to = "Unique_Values")
+```
+
+
+```{r}
+bar_plot <- ggplot(counts_per_resource, aes(x = Variable, y = Unique_Values)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = Unique_Values), vjust = -0.5) +
+  labs(title = "Counts of Unique Values of Each Variable",
+       x = "Variable",
        y = "Count") +
   theme_minimal()
+
+bar_plot
+```
+```{r}
+sum <- str(train_data)
+```
+
+```{r}
+powerful_roles <- train_data |>
+  group_by(ROLE_TITLE)|>
+  summarise(power = mean(ACTION == "1"), count = n()) |>
+  filter(count >= 100) |>
+  arrange(desc(power))
+
+head(powerful_roles, n = 15)
+```
+```{r}
+my_recipe <- recipe(ACTION ~ ., data=train_data) |>
+  step_other(all_nominal_predictors(), threshold = 0.001, other="Other") |>
+  step_dummy(all_nominal_predictors())
+
+prepped_recipe <- prep(my_recipe)
+train_data <- bake(prepped_recipe, new_data=train_data)
 ```
 
