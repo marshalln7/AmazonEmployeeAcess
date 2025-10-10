@@ -12,9 +12,8 @@ library(dplyr)
 ```{r}
 #| include: false
 train_data <- vroom("train.csv") |>
-  mutate(across(everything(), as.factor))
-test_data <- vroom("test.csv") |>
-  mutate(across(everything(), as.factor))
+  mutate(ACTION = as.factor(ACTION))
+test_data <- vroom("test.csv")
 ```
 
 ```{r}
@@ -48,12 +47,36 @@ powerful_roles <- train_data |>
 
 head(powerful_roles, n = 15)
 ```
+
 ```{r}
 my_recipe <- recipe(ACTION ~ ., data=train_data) |>
-  step_other(all_nominal_predictors(), threshold = 0.001, other="Other") |>
-  step_dummy(all_nominal_predictors())
+  step_string2factor(all_nominal_predictors()) |>  # convert strings to factors
+  step_novel(all_nominal_predictors()) |>     # EVALUATE THIS APPROACH LATER!!!
+  step_other(all_nominal_predictors(), threshold = 0.002, other="Other") |> #Look at setting this back to threshold = 0.001
+  step_dummy(all_nominal_predictors(), one_hot = TRUE)  # Full dummy encoding
 
-prepped_recipe <- prep(my_recipe)
-train_data <- bake(prepped_recipe, new_data=train_data)
+#prepped_recipe <- prep(my_recipe)
+#train_data_2 <- bake(prepped_recipe, new_data=train_data)
+#vroom_write(x=train_data_2, file="./Baked Train Data.csv", delim=",")
 ```
 
+```{r}
+logRegModel <- logistic_reg(penalty = 0.01, mixture = 1) %>%
+  set_engine("glmnet")
+
+my_workflow <- workflow() |>
+  add_recipe(my_recipe) |>
+  add_model(logRegModel) |>
+  fit(data=train_data)
+
+amazon_predictions <- predict(my_workflow, new_data=test_data, type="prob")
+```
+```{r}
+## Format the Predictions for Submission to Kaggle
+kaggle_submission <- amazon_predictions %>%
+  bind_cols(., test_data) %>% #Bind predictions with test data
+  select(id, .pred_1) %>%
+  rename(ACTION=.pred_1) 
+
+vroom_write(x=kaggle_submission, file="./Logistic_Regression_Predictions.csv", delim=",")
+```
