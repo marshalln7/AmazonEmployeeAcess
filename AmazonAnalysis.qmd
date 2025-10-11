@@ -34,6 +34,7 @@ bar_plot <- ggplot(counts_per_resource, aes(x = Variable, y = Unique_Values)) +
 
 bar_plot
 ```
+
 ```{r}
 sum <- str(train_data)
 ```
@@ -66,9 +67,25 @@ logRegModel <- logistic_reg(penalty = 0.01, mixture = 1) %>%
 
 my_workflow <- workflow() |>
   add_recipe(my_recipe) |>
-  add_model(logRegModel) |>
-  fit(data=train_data)
+  add_model(logRegModel)
+```
 
+```{r}
+## Grid of values to tune over10
+tuning_grid <- grid_regular(penalty(), mixture(), levels = L) ## L^2 total tuning possibilities13
+
+## Split data for CV15
+folds <- vfold_cv(myDataSet, v = 5, repeats=1)
+
+## Run the CV18
+CV_results <- amazon_workflow %>%19
+tune_grid(resamples=folds,20
+grid=tuning_grid,21
+metrics=metric_set(roc_auc, f_meas, sens, recall, spec,22
+precision, accuracy))
+```
+
+```{r}
 amazon_predictions <- predict(my_workflow, new_data=test_data, type="prob")
 ```
 ```{r}
