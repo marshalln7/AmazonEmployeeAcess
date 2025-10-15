@@ -1,5 +1,7 @@
-
-install.packages(c("tidymodels", "tidyverse", "vroom", "dplyr", "embed", "glmnet"))
+# Run this once interactively
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
+install.packages(c("tidymodels", "tidyverse", "vroom", "dplyr", "embed", "glmnet"),
+                 lib = Sys.getenv("R_LIBS_USER"))
 
 library(tidymodels)
 library(tidyverse)
