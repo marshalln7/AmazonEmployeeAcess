@@ -1,4 +1,6 @@
 
+install.packages(c("tidymodels", "tidyverse", "vroom", "dplyr", "embed", "glmnet"))
+
 library(tidymodels)
 library(tidyverse)
 library(vroom)
@@ -57,3 +59,4 @@ kaggle_submission <- amazon_predictions %>%
   rename(ACTION=.pred_1) 
 
 vroom_write(x=kaggle_submission, file="./Batch_Logistic_Regression_Predictions.csv", delim=",")
+
