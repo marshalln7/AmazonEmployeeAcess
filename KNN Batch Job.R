@@ -1,9 +1,12 @@
-
+library(doParallel)
 library(tidymodels)
 library(tidyverse)
 library(vroom)
 library(dplyr)
 
+cores_number <- parallel::detectCores() #How many cores do I have?
+cl <- makePSOCKcluster(cores_number)
+registerDoParallel(cl)
 
 train_data <- vroom("train.csv") |>
   mutate(ACTION = as.factor(ACTION))
@@ -40,4 +43,7 @@ kaggle_submission <- amazon_predictions %>%
   rename(ACTION=.pred_1) 
 
 vroom_write(x=kaggle_submission, file="./KNN_Predictions.csv", delim=",")
-```
+
+stopCluster(cl)
+
+
