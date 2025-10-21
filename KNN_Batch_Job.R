@@ -32,7 +32,7 @@ workflow <- workflow() %>%
   fit(data = train_data)
 
 ## Predict7
-tree_predictions <- workflow %>%
+amazon_predictions <- workflow %>%
   predict(new_data = test_data, type = "prob")
 
 
