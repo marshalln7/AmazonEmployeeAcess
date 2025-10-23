@@ -1,5 +1,5 @@
 ---
-title: "AmazonAnalysis"
+title: "Amazon Workflow Quarto"
 format: html
 ---
 
@@ -9,6 +9,9 @@ library(tidymodels)
 library(tidyverse)
 library(vroom)
 library(dplyr)
+library(embed)
+library(discrim)
+library(naivebayes)
 ```
 
 ```{r}
@@ -23,7 +26,7 @@ my_recipe <- recipe(ACTION ~ ., data=train_data) |>
   step_mutate_at(all_predictors(), fn = as.factor) |>
   step_novel(all_nominal_predictors()) |>     # EVALUATE THIS APPROACH LATER!!!
   step_other(all_nominal_predictors(), threshold = 0.002, other="Other") |> #Look at setting this back to threshold = 0.001
-  step_dummy(all_nominal_predictors(), one_hot = TRUE)  # Full dummy encoding
+  step_lencode_mixed(all_nominal_predictors(), outcome = vars(ACTION))
 
 #prepped_recipe <- prep(my_recipe)
 #train_data_2 <- bake(prepped_recipe, new_data=train_data)
@@ -31,24 +34,25 @@ my_recipe <- recipe(ACTION ~ ., data=train_data) |>
 ```
 
 ```{r}
-logRegModel <- logistic_reg(penalty = tune(), mixture = tune()) %>%
-  set_engine("glmnet")
+nb_model <- naive_Bayes(smoothness=tune()) %>%
+  set_mode("classification") %>%
+  set_engine("naivebayes")
 
 my_workflow <- workflow() |>
   add_recipe(my_recipe) |>
-  add_model(logRegModel)
+  add_model(nb_model)
 ```
 
 ```{r}
 ## Grid of values to tune over10
-tuning_grid <- grid_regular(penalty(), mixture(), levels = 5) ## L^2 total tuning possibilities
+tuning_grid <- grid_regular(smoothness(), levels = 5) ## L^2 total tuning possibilities
 
 ## Split data for CV15
 folds <- vfold_cv(train_data, v = 5, repeats=1)
 
 ## Run the CV18
 CV_results <- my_workflow %>%
-  tune_grid(resamples=folds, grid=tuning_grid, metrics=metric_set(roc_auc))
+  tune_grid(resamples=folds, grid=tuning_grid, metrics=metric_set(accuracy, roc_auc))
 ```
 
 ```{r}
@@ -74,5 +78,5 @@ kaggle_submission <- amazon_predictions %>%
   select(id, .pred_1) %>%
   rename(ACTION=.pred_1) 
 
-vroom_write(x=kaggle_submission, file="./Penalized_Logistic_Regression_Predictions.csv", delim=",")
+vroom_write(x=kaggle_submission, file="./KNN_Predictions.csv", delim=",")
 ```
