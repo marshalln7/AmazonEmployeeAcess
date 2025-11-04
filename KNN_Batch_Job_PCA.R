@@ -18,7 +18,8 @@ my_recipe <- recipe(ACTION ~ ., data=train_data) |>
   step_other(all_nominal_predictors(), threshold = 0.002, other="Other") |> #Look at setting this back to threshold = 0.001
   step_dummy(all_nominal_predictors(), one_hot = TRUE) |>  # Full dummy encoding
   step_normalize(all_predictors()) %>%
-  step_pca(all_predictors(), threshold=0.8) #Threshold is between 0 and 1
+  step_pca(all_predictors(), threshold=0.8) |> #Threshold is between 0 and 1
+  step_downsample()
 
 #prepped_recipe <- prep(my_recipe)
 #train_data_2 <- bake(prepped_recipe, new_data=train_data)
@@ -44,7 +45,7 @@ kaggle_submission <- amazon_predictions %>%
   select(id, .pred_1) %>%
   rename(ACTION=.pred_1) 
 
-vroom_write(x=kaggle_submission, file="./KNN_PCA_Predictions.csv", delim=",")
+vroom_write(x=kaggle_submission, file="./KNN_PCA_Downsample_Predictions.csv", delim=",")
 
 stopCluster(cl)
 
