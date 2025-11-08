@@ -15,14 +15,14 @@ test_data <- vroom("test.csv")
 
 my_recipe <- recipe(ACTION ~ ., data = train_data) %>%
   step_mutate_at(all_predictors(), fn = factor) %>%
-  step_lencode_mixed(all_predictors(), outcome = vars(ACTION)) %>%
+  step_lencode_bayes(all_predictors(), outcome = vars(ACTION)) %>%
   step_zv(all_predictors()) %>%
   step_normalize(all_predictors()) %>%
   step_downsample(ACTION)
 
 #prepped_recipe <- prep(my_recipe)
 #train_data_2 <- bake(prepped_recipe, new_data=train_data)
-#vroom_write(x=train_data_2, file="./Baked Train Data.csv", delim=",")
+#vroom_write(x=train_data_2, file="./Baked Amazon Train Data.csv", delim=",")
 
 svm_rbf(rbf_sigma = 0.177, cost = 0.00316) %>%
   set_mode("classification") %>%
